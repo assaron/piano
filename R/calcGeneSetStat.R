@@ -54,26 +54,28 @@ calcGeneSetStat <- function(selectedStats, method, statistics=NULL, gseaParam) {
       N <- length(r)
       NR <- (sum(abs(r[S])^p))
       
+      # :ToDo: do we need this sort?
+      S <- sort(S)
       Pprev <- 0
-      P <- rep(NA,N)
-      for(i in 1:N) {
-         if(i%in%S) {
-            if(r[i]==0) {
-               P[i] <- Pprev + 0
-            } else {
-               P[i] <- Pprev + abs(r[i])^p/NR
-            }
-         } else {
-            P[i] <- Pprev - 1/(N-m)
-         }
-         Pprev <- P[i]
+      prevI <- 0
+      minP <- 0
+      maxP <- 0
+      for (i in S) {    
+          Pprev <- Pprev - (i - 1 - prevI) / (N - m)
+          minP <- min(minP, Pprev)    
+          if(r[i]==0) {
+              Pprev <- Pprev + 0
+          } else {
+              Pprev <- Pprev + abs(r[i])^p/NR
+          }
+          maxP <- max(maxP, Pprev)
+          prevI <- i
       }
+      Pprev <- Pprev - (N - prevI) / (N - m)
+      minP <- min(minP, Pprev)    
+
       
-      if(max(P) > -min(P)) {
-         geneSetStatistic <- max(P)
-      } else {
-         geneSetStatistic <- min(P)        
-      }
+      geneSetStatistic <- max(maxP, -minP)
       
    # PAGE:
    } else if(method == "page") {
