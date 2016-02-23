@@ -71,11 +71,13 @@ calcGeneSetStat <- function(selectedStats, method, statistics=NULL, gseaParam) {
           maxP <- max(maxP, Pprev)
           prevI <- i
       }
-      Pprev <- Pprev - (N - prevI) / (N - m)
-      minP <- min(minP, Pprev)    
 
       
-      geneSetStatistic <- max(maxP, -minP)
+      if(maxP > -minP) {
+         geneSetStatistic <- maxP
+      } else {
+         geneSetStatistic <- minP        
+      }
       
    # PAGE:
    } else if(method == "page") {
