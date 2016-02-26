@@ -28,6 +28,10 @@ fdrGSEA <- function(gsStatsAll,gsStatsAllPerm,nGenes,signMethod) {
       NES <- rep(NA,nrow(gsStatsAll))
       randBgMatNormFull <- as.data.frame(matrix(nrow=nrow(gsStatsAll),ncol=ncol(randBgMat)))
       
+      message("before for")
+      message(date())
+      
+      
       for(iGeneSet in 1:nrow(gsStatsAll)) {
          
          # Create whole background matrix (for all 'gene-sets' and permutations)
@@ -58,20 +62,31 @@ fdrGSEA <- function(gsStatsAll,gsStatsAllPerm,nGenes,signMethod) {
          }
       }
        
+      message("afer for")
+      message(date())
+      
+      # Negated for edgeCases of findInterval below
+      randBgNormUpNeg <- sort(-randBgMatNormFull[randBgMatNormFull >= 0])
+      randBgNormDn <- sort(randBgMatNormFull[randBgMatNormFull <= 0])
+      NES.up <- sort(-NES[NES >= 0])
+      NES.dn <- sort(NES[NES <= 0])
+      
+      
       # For each gene set:
       FDRup <- rep(NA,nrow(gsStatsAll))
       FDRdn <- rep(NA,nrow(gsStatsAll))
+      
       for(iGeneSet in 1:nrow(gsStatsAll)) {
          
          # Calculate FDR:
          if(NES[iGeneSet] > 0) {
-            tmp1 <- sum(randBgMatNormFull >= NES[iGeneSet])/sum(randBgMatNormFull >= 0)
-            tmp2 <- sum(NES >= NES[iGeneSet])/sum(NES >= 0)
+            tmp1 <- findInterval(-NES[iGeneSet], randBgNormUpNeg) / length(randBgNormUpNeg)
+            tmp2 <- findInterval(-NES[iGeneSet], NES.up) / length(NES.up)
             FDRup[iGeneSet] <- tmp1/tmp2
             FDRdn[iGeneSet] <- NA
          } else if(NES[iGeneSet] < 0) {
-            tmp1 <- sum(randBgMatNormFull <= NES[iGeneSet])/sum(randBgMatNormFull <= 0)
-            tmp2 <- sum(NES <= NES[iGeneSet])/sum(NES <= 0)
+            tmp1 <- findInterval(NES[iGeneSet], randBgNormDn) / length(randBgNormDn)
+            tmp2 <- findInterval(NES[iGeneSet], NES.dn) / length(NES.dn)
             FDRdn[iGeneSet] <- tmp1/tmp2
             FDRup[iGeneSet] <- NA
          } else {
@@ -82,6 +97,8 @@ fdrGSEA <- function(gsStatsAll,gsStatsAllPerm,nGenes,signMethod) {
          if(max(c(FDRdn[iGeneSet],1), na.rm=TRUE) > 1) FDRdn[iGeneSet] <- 1
       }
       
+      message("afer for2")
+      message(date())
       # Save FDR in matrix:
       pValuesAllUpAdj <- cbind(pValuesAllUpAdj,FDRup)
       pValuesAllDnAdj <- cbind(pValuesAllDnAdj,FDRdn)
