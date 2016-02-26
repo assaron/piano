@@ -13,6 +13,10 @@ fdrGSEA <- function(gsStatsAll,gsStatsAllPerm,nGenes,signMethod) {
       
       # For each gene-set (or gene-set size):
       randBgMatNorm <- randBgMat
+      
+      message("the beginning")
+      message(date())
+      
       for(iGeneSetSize in 1:nrow(randBgMat)) {
          
          # Normalize background:
@@ -31,37 +35,43 @@ fdrGSEA <- function(gsStatsAll,gsStatsAllPerm,nGenes,signMethod) {
       message("before for")
       message(date())
       
-      
-      for(iGeneSet in 1:nrow(gsStatsAll)) {
-         
-         # Create whole background matrix (for all 'gene-sets' and permutations)
-         if(signMethod == "geneperm") {
-            sizeGS <- nGenes[iGeneSet,iContrast]
-            randBgMatNormFull[iGeneSet,] <- randBgMatNorm[as.character(sizeGS),]
-         } else {
-            randBgMatNormFull[iGeneSet,] <- randBgMatNorm[iGeneSet,]
-         }
-         
-         # Normalize ES:
-         ES <- gsStatsAll[iGeneSet,iContrast]
-         if(signMethod == "geneperm") {
-            tmp <- randBgMat[as.character(sizeGS),]
-         } else {
-            tmp <- randBgMat[iGeneSet,]
-         }
-         
-         #if(ES > 0 & max(tmp) <= 0) stop("normalization of enrichment scores failed, increase the number of permutations")
-         #else if(ES <= 0 & min(tmp) >= 0) stop("normalization of enrichment scores failed, increase the number of permutations")
-         
-         if(ES > 0) {
-            NES[iGeneSet] <- ES/max(c(mean(tmp[tmp >= 0]),0),na.rm=TRUE) # if no backgound, set mean to 0
-         } else if(ES < 0) {
-            NES[iGeneSet] <- ES/max(c(abs(mean(tmp[tmp <= 0])),0),na.rm=TRUE) # if no backgound, set mean to 0
-         } else {
-            NES[iGeneSet] <- 0  
-         }
+      # Create whole background matrix (for all 'gene-sets' and permutations)
+      if(signMethod == "geneperm") {
+          sizeGS <- nGenes[,iContrast]
+          randBgMatNormFull <- randBgMatNorm[as.character(sizeGS),]
+      } else {
+          randBgMatNormFull <- randBgMatNorm
       }
-       
+      
+      # Normalize ES:
+      ES <- gsStatsAll[, iContrast]
+      if(signMethod == "geneperm") {
+          tmp <- randBgMat[as.character(sizeGS),]
+      } else {
+          tmp <- randBgMat
+      }
+      
+      #if(ES > 0 & max(tmp) <= 0) stop("normalization of enrichment scores failed, increase the number of permutations")
+      #else if(ES <= 0 & min(tmp) >= 0) stop("normalization of enrichment scores failed, increase the number of permutations")
+    
+      {
+          iGeneSet <- which(ES > 0)          
+          NES[iGeneSet] <- ES[iGeneSet] / pmax(
+              apply(tmp[iGeneSet, ], 1, function(x) mean(x[x >= 0])),
+              0, 
+              na.rm=TRUE) # if no backgound, set mean to 0
+      }
+      
+      {
+          iGeneSet <- which(ES < 0)          
+          NES[iGeneSet] <- ES[iGeneSet] / pmax(
+              abs(apply(tmp[iGeneSet, ], 1, function(x) mean(x[x <= 0]))),
+              0, 
+              na.rm=TRUE) # if no backgound, set mean to 0
+      }
+      
+      NES[which(ES == 0)] <- 0
+      
       message("afer for")
       message(date())
       
