@@ -14,9 +14,6 @@ fdrGSEA <- function(gsStatsAll,gsStatsAllPerm,nGenes,signMethod) {
       # For each gene-set (or gene-set size):
       randBgMatNorm <- randBgMat
       
-      message("the beginning")
-      message(date())
-      
       for(iGeneSetSize in 1:nrow(randBgMat)) {
          
          # Normalize background:
@@ -31,9 +28,6 @@ fdrGSEA <- function(gsStatsAll,gsStatsAllPerm,nGenes,signMethod) {
       # For each gene set:
       NES <- rep(NA,nrow(gsStatsAll))
       randBgMatNormFull <- as.data.frame(matrix(nrow=nrow(gsStatsAll),ncol=ncol(randBgMat)))
-      
-      message("before for")
-      message(date())
       
       # Create whole background matrix (for all 'gene-sets' and permutations)
       if(signMethod == "geneperm") {
@@ -72,9 +66,6 @@ fdrGSEA <- function(gsStatsAll,gsStatsAllPerm,nGenes,signMethod) {
       
       NES[which(ES == 0)] <- 0
       
-      message("afer for")
-      message(date())
-      
       # Negated for edgeCases of findInterval below
       randBgNormUpNeg <- sort(-randBgMatNormFull[randBgMatNormFull >= 0])
       randBgNormDn <- sort(randBgMatNormFull[randBgMatNormFull <= 0])
@@ -111,8 +102,6 @@ fdrGSEA <- function(gsStatsAll,gsStatsAllPerm,nGenes,signMethod) {
       FDRup[which(FDRup > 1)] <- 1
       FDRdn[which(FDRdn > 1)] <- 1
       
-      message("afer for2")
-      message(date())
       # Save FDR in matrix:
       pValuesAllUpAdj <- cbind(pValuesAllUpAdj,FDRup)
       pValuesAllDnAdj <- cbind(pValuesAllDnAdj,FDRdn)
