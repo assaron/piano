@@ -76,26 +76,30 @@ fdrGSEA <- function(gsStatsAll,gsStatsAllPerm,nGenes,signMethod) {
       FDRup <- rep(NA,nrow(gsStatsAll))
       FDRdn <- rep(NA,nrow(gsStatsAll))
       
-      for(iGeneSet in 1:nrow(gsStatsAll)) {
-         
-         # Calculate FDR:
-         if(NES[iGeneSet] > 0) {
-            tmp1 <- findInterval(-NES[iGeneSet], randBgNormUpNeg) / length(randBgNormUpNeg)
-            tmp2 <- findInterval(-NES[iGeneSet], NES.up) / length(NES.up)
-            FDRup[iGeneSet] <- tmp1/tmp2
-            FDRdn[iGeneSet] <- NA
-         } else if(NES[iGeneSet] < 0) {
-            tmp1 <- findInterval(NES[iGeneSet], randBgNormDn) / length(randBgNormDn)
-            tmp2 <- findInterval(NES[iGeneSet], NES.dn) / length(NES.dn)
-            FDRdn[iGeneSet] <- tmp1/tmp2
-            FDRup[iGeneSet] <- NA
-         } else {
-            FDRup[iGeneSet] <- 1  
-            FDRdn[iGeneSet] <- 1
-         }
-         if(max(c(FDRup[iGeneSet],1), na.rm=TRUE) > 1) FDRup[iGeneSet] <- 1
-         if(max(c(FDRdn[iGeneSet],1), na.rm=TRUE) > 1) FDRdn[iGeneSet] <- 1
+      {
+          iGeneSet <- which(NES > 0)
+          iGeneSet <- iGeneSet[order(-NES[iGeneSet])]
+          tmp1 <- findInterval(-NES[iGeneSet], randBgNormUpNeg) / length(randBgNormUpNeg)
+          tmp2 <- findInterval(-NES[iGeneSet], NES.up) / length(NES.up)
+          FDRup[iGeneSet] <- tmp1/tmp2
       }
+      
+      {
+          iGeneSet <- which(NES < 0)
+          iGeneSet <- iGeneSet[order(NES[iGeneSet])]
+          tmp1 <- findInterval(NES[iGeneSet], randBgNormDn) / length(randBgNormDn)
+          tmp2 <- findInterval(NES[iGeneSet], NES.dn) / length(NES.dn)
+          FDRdn[iGeneSet] <- tmp1/tmp2
+      }
+      
+      {
+          iGeneSet <- which(NES == 0)
+          FDRup[iGeneSet] <- 1  
+          FDRdn[iGeneSet] <- 1
+      }
+      
+      FDRup[which(FDRup > 1)] <- 1
+      FDRdn[which(FDRdn > 1)] <- 1
       
       message("afer for2")
       message(date())
