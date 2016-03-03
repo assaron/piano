@@ -1,4 +1,4 @@
-calcGeneSetStat <- function(selectedStats, method, statistics=NULL, gseaParam) {
+calcGeneSetStat <- function(selectedStats, method, statistics=NULL, gseaParam, cumulative=FALSE) {
    
    # Fisher:
    if(method == "fisher") {
@@ -46,6 +46,9 @@ calcGeneSetStat <- function(selectedStats, method, statistics=NULL, gseaParam) {
       
    # GSEA:
    } else if(method == "gsea") {
+      if (cumulative) {
+          return(calcGseaStatCumulative(statistics, selectedStats, gseaParam))
+      }
       S <- selectedStats
       r <- statistics
       p <- gseaParam

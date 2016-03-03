@@ -55,159 +55,194 @@ GSCstatGenePerm <- function(dummy, statistics, signs, gsc, statType, method, nGe
       gsStatsUpMatrix <- matrix(nrow=length(gsSizesUp), ncol=nPerm)
       gsStatsDnMatrix <- matrix(nrow=length(gsSizesDn), ncol=nPerm)
       
+      message(date(), " Starting sampling")
       
-      # For each full gene set size (Directional and mixed):
-      for(iGeneSet in 1:length(gsSizes)) {
-         gsStatsAll <- rep(NA,nPerm)
-         gsStatsAllTestUp <- rep(NA,nPerm)
-         gsStatsAllTestDn <- rep(NA,nPerm)
-         gsStatsAbs <- rep(NA,nPerm)
-         nGenesInSet <- gsSizes[iGeneSet]
-         
-         # Loop nPerm times:
-         for(iPerm in 1:nPerm) {
-            
-            #************************  
-            # Fisher:
-            #************************
-            if(method == "fisher") {
-            
-               # "Mixed" gene-set statistics:
-               #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
-               rInd <- sample(1:length(statsContrast),nGenesInSet)
-               randStats <- statsContrast[rInd]
-               gsStatsAbs[iPerm] <- calcGeneSetStat(abs(randStats), method)
-            }
+      
+      if ((method == "mean" && statType == "t" || method == "gsea")) {
+          message("Using cumulative method")
+          if (method == "mean") {
+              for (iPerm in 1:nPerm) {
+                  nGenesInSet <- max(gsSizes)
+                  
+                  # Select random set:
+                  #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
+                  rInd <- sample(1:length(statsContrast),nGenesInSet)
+                  randStats <- statsContrast[rInd]
+                  
+                  # "Directional" gene-set statistics:
+                  gsStatsAllMatrix[, iPerm] <- calcGeneSetStat(randStats, method, cumulative=T)[gsSizes]
+                  
+                  # "Mixed" gene-set statistics:
+                  gsStatsAbsMatrix[, iPerm] <- calcGeneSetStat(abs(randStats), method, cumulative=T)[gsSizes]
+              }
+          } else if (method == "gsea") {
+              for (iPerm in 1:nPerm) {
+                  nGenesInSet <- max(gsSizes)
+                  
+                  # Select random set:
+                  #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
+                  rInd <- sample(1:length(statsContrast),nGenesInSet)
+                  gsStatsAllMatrix[, iPerm] <- calcGeneSetStat(rInd, method, statsContrastSorted, gseaParam, cumulative=T)[gsSizes]
+              }
               
-            
-            #************************
-            # Stouffer:
-            # Reporter:
-            # Tail strength:
-            #************************
-            if(method %in% c("stouffer","reporter","tailStrength")) {
-               
-               # Select random set:
-               #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
-               rInd <- sample(1:length(statsContrast),nGenesInSet)
-               randStats <- statsContrast[rInd]
-               
-               # "Directional" gene-set statistics:
-               if(statType == "p-signed") {
-                  rInd <- sample(1:length(statsContrastTestUp),nGenesInSet)
-                  randStatsTestUp <- statsContrastTestUp[rInd]
-                  randStatsTestDn <- statsContrastTestDn[rInd]                  
-                  gsStatsAllTestUp[iPerm] <- calcGeneSetStat(randStatsTestUp, method)                  
-                  gsStatsAllTestDn[iPerm] <- calcGeneSetStat(randStatsTestDn, method)
-               }
-               
-               # "Mixed" gene-set statistics
-               gsStatsAbs[iPerm] <- calcGeneSetStat(abs(randStats), method)
-            }
-            
-            
-            #************************
-            # Wilcoxon:
-            #************************
-            if(method == "wilcoxon") {
-             
-               # Select random set:
-               #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
-               rInd <- sample(1:length(statsContrast),nGenesInSet)
-               randStats <- statsContrast[rInd]
-               statsNotInSet <- statsContrast[!c(1:length(statsContrast))%in%rInd]
-               
-               # "Directional" gene-set statistics:
-               if(statType == "p-signed") {
-                  rInd <- sample(1:length(statsContrastTestUp),nGenesInSet)
-                  randStatsTestUp <- statsContrastTestUp[rInd]
-                  randStatsTestDn <- statsContrastTestDn[rInd]
-                  statsNotInSetTestUp <- statsContrastTestUp[!c(1:length(statsContrastTestUp))%in%rInd]
-                  statsNotInSetTestDn <- statsContrastTestDn[!c(1:length(statsContrastTestDn))%in%rInd]
-                  gsStatsAllTestUp[iPerm] <- calcGeneSetStat(randStatsTestUp, "wilcoxon_fast", statsNotInSetTestUp)[1]
-                  gsStatsAllTestDn[iPerm] <- calcGeneSetStat(randStatsTestDn, "wilcoxon_fast", statsNotInSetTestDn)[1]  
-               } else if(statType == "t") {
-                  gsStatsAll[iPerm] <- calcGeneSetStat(randStats, "wilcoxon_fast", statsNotInSet)[1]
-               }
-               
-               # "Mixed" gene-set statistics: 
-               gsStatsAbs[iPerm] <- calcGeneSetStat(abs(randStats), "wilcoxon_fast", abs(statsNotInSet))[1]
-            }
-            
-            
-            #************************
-            # Mean:
-            # Median:
-            # Sum:
-            #************************
-            if(method %in% c("mean","median","sum")) {
-               
-               # Select random set:
-               #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
-               rInd <- sample(1:length(statsContrast),nGenesInSet)
-               randStats <- statsContrast[rInd]
-               
-               # "Directional" gene-set statistics:
-               if(statType == "p-signed") {
-                  rInd <- sample(1:length(statsContrastTestUp),nGenesInSet)
-                  randStatsTestUp <- statsContrastTestUp[rInd]
-                  randStatsTestDn <- statsContrastTestDn[rInd]
-                  gsStatsAllTestUp[iPerm] <- calcGeneSetStat(randStatsTestUp, method)
-                  gsStatsAllTestDn[iPerm] <- calcGeneSetStat(randStatsTestDn, method)
-               } else if(statType == "t") {
-                  gsStatsAll[iPerm] <- calcGeneSetStat(randStats, method)  
-               }
-               
-               # "Mixed" gene-set statistics:
-               gsStatsAbs[iPerm] <- calcGeneSetStat(abs(randStats), method)
-               
-            }
-            
-            
-            #************************   
-            # Maxmean:
-            #************************
-            if(method == "maxmean") {
-               
-               # "Mixed" gene-set statistics:
-               #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
-               rInd <- sample(1:length(statsContrast),nGenesInSet)
-               randStats <- statsContrast[rInd]
-               gsStatsAbs[iPerm] <- calcGeneSetStat(randStats, method)
-            }
-               
-            #************************   
-            # GSEA:
-            #************************
-            if(method == "gsea") {
-               
-               # "Directional" gene-set statistics:
-               #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
-               rInd <- sample(1:length(statsContrast),nGenesInSet)
-               gsStatsAll[iPerm] <- calcGeneSetStat(rInd, method, statsContrastSorted, gseaParam)
-            }
-            
-            
-            #************************  
-            # Page:
-            #************************
-            if(method == "page") {
-             
-               # "Directional" gene-set statistics:
-               #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
-               rInd <- sample(1:length(statsContrast),nGenesInSet)
-               randStats <- statsContrast[rInd]
-               gsStatsAll[iPerm] <- calcGeneSetStat(randStats, method, statsContrast)
-            }
-           
-         }
-         
-         # Save in matrix (each gene set size is represented by a row of statistics):
-         gsStatsAllMatrix[iGeneSet,] <- gsStatsAll
-         gsStatsAllTestUpMatrix[iGeneSet,] <- gsStatsAllTestUp
-         gsStatsAllTestDnMatrix[iGeneSet,] <- gsStatsAllTestDn
-         gsStatsAbsMatrix[iGeneSet,] <- gsStatsAbs
+          }
+      } else {
+          
+          # For each full gene set size (Directional and mixed):
+          for(iGeneSet in 1:length(gsSizes)) {
+              gsStatsAll <- rep(NA,nPerm)
+              gsStatsAllTestUp <- rep(NA,nPerm)
+              gsStatsAllTestDn <- rep(NA,nPerm)
+              gsStatsAbs <- rep(NA,nPerm)
+              nGenesInSet <- gsSizes[iGeneSet]
+              
+              # Loop nPerm times:
+              for(iPerm in 1:nPerm) {
+                  
+                  #************************  
+                  # Fisher:
+                  #************************
+                  if(method == "fisher") {
+                      
+                      # "Mixed" gene-set statistics:
+                      #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
+                      rInd <- sample(1:length(statsContrast),nGenesInSet)
+                      randStats <- statsContrast[rInd]
+                      gsStatsAbs[iPerm] <- calcGeneSetStat(abs(randStats), method)
+                  }
+                  
+                  
+                  #************************
+                  # Stouffer:
+                  # Reporter:
+                  # Tail strength:
+                  #************************
+                  if(method %in% c("stouffer","reporter","tailStrength")) {
+                      
+                      # Select random set:
+                      #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
+                      rInd <- sample(1:length(statsContrast),nGenesInSet)
+                      randStats <- statsContrast[rInd]
+                      
+                      # "Directional" gene-set statistics:
+                      if(statType == "p-signed") {
+                          rInd <- sample(1:length(statsContrastTestUp),nGenesInSet)
+                          randStatsTestUp <- statsContrastTestUp[rInd]
+                          randStatsTestDn <- statsContrastTestDn[rInd]                  
+                          gsStatsAllTestUp[iPerm] <- calcGeneSetStat(randStatsTestUp, method)                  
+                          gsStatsAllTestDn[iPerm] <- calcGeneSetStat(randStatsTestDn, method)
+                      }
+                      
+                      # "Mixed" gene-set statistics
+                      gsStatsAbs[iPerm] <- calcGeneSetStat(abs(randStats), method)
+                  }
+                  
+                  
+                  #************************
+                  # Wilcoxon:
+                  #************************
+                  if(method == "wilcoxon") {
+                      
+                      # Select random set:
+                      #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
+                      rInd <- sample(1:length(statsContrast),nGenesInSet)
+                      randStats <- statsContrast[rInd]
+                      statsNotInSet <- statsContrast[!c(1:length(statsContrast))%in%rInd]
+                      
+                      # "Directional" gene-set statistics:
+                      if(statType == "p-signed") {
+                          rInd <- sample(1:length(statsContrastTestUp),nGenesInSet)
+                          randStatsTestUp <- statsContrastTestUp[rInd]
+                          randStatsTestDn <- statsContrastTestDn[rInd]
+                          statsNotInSetTestUp <- statsContrastTestUp[!c(1:length(statsContrastTestUp))%in%rInd]
+                          statsNotInSetTestDn <- statsContrastTestDn[!c(1:length(statsContrastTestDn))%in%rInd]
+                          gsStatsAllTestUp[iPerm] <- calcGeneSetStat(randStatsTestUp, "wilcoxon_fast", statsNotInSetTestUp)[1]
+                          gsStatsAllTestDn[iPerm] <- calcGeneSetStat(randStatsTestDn, "wilcoxon_fast", statsNotInSetTestDn)[1]  
+                      } else if(statType == "t") {
+                          gsStatsAll[iPerm] <- calcGeneSetStat(randStats, "wilcoxon_fast", statsNotInSet)[1]
+                      }
+                      
+                      # "Mixed" gene-set statistics: 
+                      gsStatsAbs[iPerm] <- calcGeneSetStat(abs(randStats), "wilcoxon_fast", abs(statsNotInSet))[1]
+                  }
+                  
+                  
+                  #************************
+                  # Mean:
+                  # Median:
+                  # Sum:
+                  #************************
+                  if(method %in% c("mean","median","sum")) {
+                      
+                      # Select random set:
+                      #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
+                      rInd <- sample(1:length(statsContrast),nGenesInSet)
+                      randStats <- statsContrast[rInd]
+                      
+                      # "Directional" gene-set statistics:
+                      if(statType == "p-signed") {
+                          rInd <- sample(1:length(statsContrastTestUp),nGenesInSet)
+                          randStatsTestUp <- statsContrastTestUp[rInd]
+                          randStatsTestDn <- statsContrastTestDn[rInd]
+                          gsStatsAllTestUp[iPerm] <- calcGeneSetStat(randStatsTestUp, method)
+                          gsStatsAllTestDn[iPerm] <- calcGeneSetStat(randStatsTestDn, method)
+                      } else if(statType == "t") {
+                          gsStatsAll[iPerm] <- calcGeneSetStat(randStats, method)  
+                      }
+                      
+                      # "Mixed" gene-set statistics:
+                      gsStatsAbs[iPerm] <- calcGeneSetStat(abs(randStats), method)
+                      
+                  }
+                  
+                  
+                  #************************   
+                  # Maxmean:
+                  #************************
+                  if(method == "maxmean") {
+                      
+                      # "Mixed" gene-set statistics:
+                      #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
+                      rInd <- sample(1:length(statsContrast),nGenesInSet)
+                      randStats <- statsContrast[rInd]
+                      gsStatsAbs[iPerm] <- calcGeneSetStat(randStats, method)
+                  }
+                  
+                  #************************   
+                  # GSEA:
+                  #************************
+                  if(method == "gsea") {
+                      
+                      # "Directional" gene-set statistics:
+                      #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
+                      rInd <- sample(1:length(statsContrast),nGenesInSet)
+                      gsStatsAll[iPerm] <- calcGeneSetStat(rInd, method, statsContrastSorted, gseaParam)
+                  }
+                  
+                  
+                  #************************  
+                  # Page:
+                  #************************
+                  if(method == "page") {
+                      
+                      # "Directional" gene-set statistics:
+                      #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
+                      rInd <- sample(1:length(statsContrast),nGenesInSet)
+                      randStats <- statsContrast[rInd]
+                      gsStatsAll[iPerm] <- calcGeneSetStat(randStats, method, statsContrast)
+                  }
+                  
+              }
+              
+              # Save in matrix (each gene set size is represented by a row of statistics):
+              gsStatsAllMatrix[iGeneSet,] <- gsStatsAll
+              gsStatsAllTestUpMatrix[iGeneSet,] <- gsStatsAllTestUp
+              gsStatsAllTestDnMatrix[iGeneSet,] <- gsStatsAllTestDn
+              gsStatsAbsMatrix[iGeneSet,] <- gsStatsAbs
+          }          
       }
+      
+      message(date(), " Finished directional sampling")
       
       
       # For each gene set size (subset Up):
@@ -255,6 +290,7 @@ GSCstatGenePerm <- function(dummy, statistics, signs, gsc, statType, method, nGe
          }
       }
       
+      message(date(), " Finished up sampling")
        
       # For each gene set size (subset Dn):
       if(statType %in% c("t","p-signed","F-signed") & method %in% c("fisher","stouffer","reporter","tailStrength","mean","median","sum","wilcoxon")) {
@@ -300,6 +336,8 @@ GSCstatGenePerm <- function(dummy, statistics, signs, gsc, statType, method, nGe
             gsStatsDnMatrix[iGeneSet,] <- gsStatsDn
          }
       }
+      
+      message(date(), " Finished down sampling")
       
       # Save results:
       rownames(gsStatsAllMatrix) <- gsSizes
