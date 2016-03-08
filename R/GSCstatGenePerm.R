@@ -82,7 +82,10 @@ GSCstatGenePerm <- function(dummy, statistics, signs, gsc, statType, method, nGe
                   # Select random set:
                   #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrast)))
                   rInd <- sample(1:length(statsContrast),nGenesInSet)
-                  gsStatsAllMatrix[, iPerm] <- calcGeneSetStat(rInd, method, statsContrastSorted, gseaParam, cumulative=T)[gsSizes]
+                  gsStatsAllMatrix[, iPerm] <- calcGeneSetStat(rInd, method, 
+                                                               statsContrastSorted,
+                                                               gseaParam,
+                                                               cumulative=T)[gsSizes]
               }
               
           }
@@ -247,46 +250,62 @@ GSCstatGenePerm <- function(dummy, statistics, signs, gsc, statType, method, nGe
       
       # For each gene set size (subset Up):
       if(statType %in% c("t","p-signed","F-signed") & method %in% c("fisher","stouffer","reporter","tailStrength","mean","median","sum","wilcoxon")) {
-         for(iGeneSet in 1:length(gsSizesUp)) {
-            gsStatsUp <- rep(NA,nPerm)
-            nGenesInSet <- gsSizesUp[iGeneSet]
-            
-            # Loop nPerm times:
-            if(nGenesInSet > 0) {
-               for(iPerm in 1:nPerm) {
-                  
-                  #************************  
-                  # Fisher:
-                  # Stouffer:
-                  # Reporter:
-                  # Tail strength:
-                  # Mean:
-                  # Median:
-                  # Sum:
-                  #************************
-                  if(method %in% c("fisher","stouffer","reporter","tailStrength","mean","median","sum")) {
-                     #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrastUp)))
-                     rInd <- sample(1:length(statsContrastUp),nGenesInSet)
-                     randStats <- statsContrastUp[rInd]
-                     gsStatsUp[iPerm] <- calcGeneSetStat(randStats, method)
-                     
-                  } 
-                  
-                  #************************  
-                  # Wilcoxon:
-                  #************************
-                  if(method == "wilcoxon") {
-                     #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrastUp)))
-                     rInd <- sample(1:length(statsContrastUp),nGenesInSet)
-                     randStats <- statsContrastUp[rInd]
-                     statsNotInSet <- statsContrastUp[!c(1:length(statsContrastUp))%in%rInd]
-                     gsStatsUp[iPerm] <- calcGeneSetStat(randStats, "wilcoxon_fast", statsNotInSet)[1]
-                  }
-               }
-            }
-            
-            # Save in matrix (each gene set size is represented by a row of statistics):
-            gsStatsUpMatrix[iGeneSet,] <- gsStatsUp
+         if (method == "mean") {
+             message("Using cumulative method")
+             for (iPerm in 1:nPerm) {
+                 nGenesInSet <- max(gsSizesUp)
+                 
+                 rInd <- sample(1:length(statsContrastUp), nGenesInSet)
+                 randStats <- statsContrastUp[rInd]
+                 
+                 gsStatsUpMatrix[gsSizesUp > 0, iPerm] <- 
+                     calcGeneSetStat(randStats,
+                                     method,
+                                     cumulative=T)[gsSizesUp]
+             }
+             
+         } else {
+             for(iGeneSet in 1:length(gsSizesUp)) {
+                 gsStatsUp <- rep(NA,nPerm)
+                 nGenesInSet <- gsSizesUp[iGeneSet]
+                 
+                 # Loop nPerm times:
+                 if(nGenesInSet > 0) {
+                     for(iPerm in 1:nPerm) {
+                         
+                         #************************  
+                         # Fisher:
+                         # Stouffer:
+                         # Reporter:
+                         # Tail strength:
+                         # Mean:
+                         # Median:
+                         # Sum:
+                         #************************
+                         if(method %in% c("fisher","stouffer","reporter","tailStrength","mean","median","sum")) {
+                             #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrastUp)))
+                             rInd <- sample(1:length(statsContrastUp),nGenesInSet)
+                             randStats <- statsContrastUp[rInd]
+                             gsStatsUp[iPerm] <- calcGeneSetStat(randStats, method)
+                             
+                         } 
+                         
+                         #************************  
+                         # Wilcoxon:
+                         #************************
+                         if(method == "wilcoxon") {
+                             #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrastUp)))
+                             rInd <- sample(1:length(statsContrastUp),nGenesInSet)
+                             randStats <- statsContrastUp[rInd]
+                             statsNotInSet <- statsContrastUp[!c(1:length(statsContrastUp))%in%rInd]
+                             gsStatsUp[iPerm] <- calcGeneSetStat(randStats, "wilcoxon_fast", statsNotInSet)[1]
+                         }
+                     }
+                 }
+                 
+                 # Save in matrix (each gene set size is represented by a row of statistics):
+                 gsStatsUpMatrix[iGeneSet,] <- gsStatsUp
+             }
          }
       }
       
@@ -294,46 +313,63 @@ GSCstatGenePerm <- function(dummy, statistics, signs, gsc, statType, method, nGe
        
       # For each gene set size (subset Dn):
       if(statType %in% c("t","p-signed","F-signed") & method %in% c("fisher","stouffer","reporter","tailStrength","mean","median","sum","wilcoxon")) {
-         for(iGeneSet in 1:length(gsSizesDn)) {
-            gsStatsDn <- rep(NA,nPerm)
-            nGenesInSet <- gsSizesDn[iGeneSet]
-            
-            # Loop nPerm times:
-            if(nGenesInSet > 0) {
-               for(iPerm in 1:nPerm) {
-                  
-                  #************************  
-                  # Fisher:
-                  # Stouffer:
-                  # Reporter:
-                  # Tail strength:
-                  # Mean:
-                  # Median:
-                  # Sum:
-                  #************************
-                  if(method %in% c("fisher","stouffer","reporter","tailStrength","mean","median","sum")) {
-                     #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrastDn)))
-                     rInd <- sample(1:length(statsContrastDn),nGenesInSet)
-                     randStats <- statsContrastDn[rInd]
-                     gsStatsDn[iPerm] <- calcGeneSetStat(randStats, method)
-                     
-                  } 
-                  
-                  #************************  
-                  # Wilcoxon:
-                  #************************
-                  if(method == "wilcoxon") {
-                     #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrastDn)))
-                     rInd <- sample(1:length(statsContrastDn),nGenesInSet)
-                     randStats <- statsContrastDn[rInd]
-                     statsNotInSet <- statsContrastDn[!c(1:length(statsContrastDn))%in%rInd]
-                     gsStatsDn[iPerm] <- calcGeneSetStat(randStats, "wilcoxon_fast", statsNotInSet)[1]
-                  }
-               }
-            }
-            
-            # Save in matrix (each gene set size is represented by a row of statistics):
-            gsStatsDnMatrix[iGeneSet,] <- gsStatsDn
+         if (method == "mean") {
+             message("Using cumulative method")
+             for (iPerm in 1:nPerm) {
+                 nGenesInSet <- max(gsSizesDn)
+                 
+                 rInd <- sample(1:length(statsContrastDn), nGenesInSet)
+                 randStats <- statsContrastDn[rInd]
+                 
+                 gsStatsDnMatrix[gsSizesDn > 0, iPerm] <- 
+                     calcGeneSetStat(randStats, 
+                                     method,
+                                     cumulative=T)[gsSizesDn]
+             }
+             
+         } else {
+             for(iGeneSet in 1:length(gsSizesDn)) {
+                 gsStatsDn <- rep(NA,nPerm)
+                 nGenesInSet <- gsSizesDn[iGeneSet]
+                 
+                 # Loop nPerm times:
+                 if(nGenesInSet > 0) {
+                     for(iPerm in 1:nPerm) {
+                         
+                         #************************  
+                         # Fisher:
+                         # Stouffer:
+                         # Reporter:
+                         # Tail strength:
+                         # Mean:
+                         # Median:
+                         # Sum:
+                         #************************
+                         if(method %in% c("fisher","stouffer","reporter","tailStrength","mean","median","sum")) {
+                             #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrastDn)))
+                             rInd <- sample(1:length(statsContrastDn),nGenesInSet)
+                             randStats <- statsContrastDn[rInd]
+                             gsStatsDn[iPerm] <- calcGeneSetStat(randStats, method)
+                             
+                         } 
+                         
+                         #************************  
+                         # Wilcoxon:
+                         #************************
+                         if(method == "wilcoxon") {
+                             #rInd <- ceiling(runif(nGenesInSet,0,length(statsContrastDn)))
+                             rInd <- sample(1:length(statsContrastDn),nGenesInSet)
+                             randStats <- statsContrastDn[rInd]
+                             statsNotInSet <- statsContrastDn[!c(1:length(statsContrastDn))%in%rInd]
+                             gsStatsDn[iPerm] <- calcGeneSetStat(randStats, "wilcoxon_fast", statsNotInSet)[1]
+                         }
+                     }
+                 }
+                 
+                 # Save in matrix (each gene set size is represented by a row of statistics):
+                 gsStatsDnMatrix[iGeneSet,] <- gsStatsDn
+             }
+             
          }
       }
       

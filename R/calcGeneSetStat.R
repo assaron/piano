@@ -1,5 +1,5 @@
 calcGeneSetStat <- function(selectedStats, method, statistics=NULL, gseaParam, cumulative=FALSE) {
-   
+   stopifnot(!cumulative || method %in% c("gsea", "mean"))
    # Fisher:
    if(method == "fisher") {
       geneSetStatistic <- 2*(sum(-1*log(selectedStats))) 
@@ -27,6 +27,9 @@ calcGeneSetStat <- function(selectedStats, method, statistics=NULL, gseaParam, c
       
    # Mean:
    } else if(method == "mean") {
+      if (cumulative) {
+          return(cumsum(selectedStats) / seq_along(selectedStats))
+      }
       geneSetStatistic <- mean(selectedStats)
       
    # Median:   
