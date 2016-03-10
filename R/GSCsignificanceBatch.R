@@ -12,6 +12,7 @@ GSCsignificanceBatch <- function(statistics, statType, signs, gsc, statMethod, s
       if(ncpus>1) { # Run fast, on multiple CPUs:
          #if(!try(suppressMessages(require(snowfall)))) stop("package snowfall is missing") # old, line below is preferred:
          if (!requireNamespace("snowfall", quietly = TRUE)) stop("package snowfall is missing")
+         if (!require("snow", quietly = TRUE)) stop("package snow is missing")
          # Initialize parallelization:
          tmp<-capture.output(suppressMessages(snowfall::sfInit(parallel=T,cpus=ncpus)))
          # Run in parallel:
