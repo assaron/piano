@@ -9,7 +9,7 @@ Author@R: c(person("Leif", "Varemo", email = "piano.rpkg@gmail.com",
 Author: Leif Varemo <piano.rpkg@gmail.com> and Intawat Nookaew <piano.rpkg@gmail.com>
 Maintainer: Leif Varemo <piano.rpkg@gmail.com>
 Depends: R (>= 2.14.0)
-Imports: BiocGenerics, Biobase, gplots, igraph, relations, marray, Rcpp (>= 0.11.0)
+Imports: BiocGenerics, Biobase, gplots, igraph, relations, marray, Rcpp (>= 0.11.0), hash
 Suggests: yeast2.db, rsbml, plotrix, limma, affy, plier, affyPLM,
         gtools, biomaRt, snowfall, AnnotationDbi
 LinkingTo: Rcpp

@@ -228,12 +228,11 @@ checkLoadArg <- function(statistics,
    gsc <- gsc$gsc
    
    # Remove genes with no occurance in statistics:
-   tmp <- vector()
-   for(iGeneSet in 1:length(gsc)) {
-      tmp <- c(tmp, gsc[[iGeneSet]][!gsc[[iGeneSet]] %in% rownames(statistics)])
-      gsc[[iGeneSet]] <- gsc[[iGeneSet]][gsc[[iGeneSet]] %in% rownames(statistics)]
-   }
-   info$removedGenesGSC <- length(unique(tmp))
+   gene_names <- rownames(statistics)
+   gene_names <- hash(gene_names, rep(TRUE, length(gene_names)))
+   tmp <- lapply(gsc, function(genes) genes[!has.key(genes, gene_names)])
+   gsc <- lapply(gsc, function(genes) genes[has.key(genes, gene_names)])
+   info$removedGenesGSC <- length(unique(unlist(tmp)))
    
    # Remove gene sets with zero genes:
    tmp <- length(gsc)
