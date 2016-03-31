@@ -23,7 +23,8 @@ S3method(print, GSAres)
 import(
   BiocGenerics,
   Biobase,
-  igraph
+  igraph,
+  hash
 )
 
 importFrom(gplots, heatmap.2, venn)
